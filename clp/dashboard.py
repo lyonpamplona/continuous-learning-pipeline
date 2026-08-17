@@ -1,15 +1,18 @@
-"""Dashboard module — generates web dashboard for skill review."""
+"""Modulo Dashboard — gera dashboard web para revisao de skills."""
 
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 from clp.scorer import Scorer
 
+logger = logging.getLogger(__name__)
+
 
 class Dashboard:
-    """Generates web dashboard for skill review."""
+    """Gera dashboard web para revisao de skills."""
 
     def __init__(self, config=None):
         self.config = config or {}
@@ -19,7 +22,7 @@ class Dashboard:
 
     def generate(self, pending_dir: str = None, approved_dir: str = None,
                  rejected_dir: str = None, generate_html: bool = True) -> dict:
-        """Generate dashboard with current skill status."""
+        """Gera dashboard com status atual das skills."""
         workspace = Path(self.config.get("workspace_dir", "~/.clp/workspace")).expanduser()
 
         if pending_dir is None:
@@ -33,7 +36,7 @@ class Dashboard:
         approved_dir = Path(approved_dir)
         rejected_dir = Path(rejected_dir)
 
-        # Collect pending skills
+        # Coletar skills pendentes
         pending_skills = []
         if pending_dir.exists():
             for skill_dir in pending_dir.iterdir():
@@ -53,7 +56,7 @@ class Dashboard:
                                 "path": str(skill_file),
                             })
 
-        # Count approved and rejected
+        # Contar aprovadas e rejeitadas
         approved_count = len(list(approved_dir.iterdir())) if approved_dir.exists() else 0
         rejected_count = len(list(rejected_dir.iterdir())) if rejected_dir.exists() else 0
 
@@ -64,18 +67,20 @@ class Dashboard:
             "skills": pending_skills,
         }
 
-        # Generate HTML dashboard
+        # Gerar dashboard HTML
         if generate_html:
             html_path = self.reports_dir / "review-dashboard.html"
             html = self._generate_html(pending_skills, approved_count, rejected_count)
             html_path.write_text(html)
             result["html_path"] = str(html_path)
 
-        # Generate Markdown dashboard
+        # Gerar dashboard Markdown
         md_path = self.reports_dir / "review-dashboard.md"
         md = self._generate_markdown(pending_skills, approved_count, rejected_count)
         md_path.write_text(md)
         result["md_path"] = str(md_path)
+
+        logger.info(f"Dashboard gerado: {len(pending_skills)} pendentes, {approved_count} aprovadas, {rejected_count} rejeitadas")
 
         return result
 

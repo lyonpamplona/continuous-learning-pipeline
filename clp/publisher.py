@@ -1,5 +1,6 @@
 """Modulo Publisher — publica skills aprovadas no framework de agente."""
 
+import logging
 import re
 import shutil
 from pathlib import Path
@@ -8,6 +9,8 @@ from typing import Optional
 import yaml
 
 from clp.plugins import AgentPlugin, get_plugin
+
+logger = logging.getLogger(__name__)
 
 
 class Publisher:

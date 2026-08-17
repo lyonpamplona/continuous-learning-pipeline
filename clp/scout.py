@@ -1,15 +1,18 @@
-"""Scout module — discovers relevant repositories from GitHub."""
+"""Modulo Scout — descobre repositórios relevantes no GitHub."""
 
 import json
+import logging
 import time
 from pathlib import Path
 from typing import Optional
 
 import requests
 
+logger = logging.getLogger(__name__)
+
 
 class Scout:
-    """Discovers relevant GitHub repositories for skill extraction."""
+    """Descobre repositórios relevantes no GitHub para extração de skills."""
 
     def __init__(self, config=None):
         self.config = config or {}
@@ -17,9 +20,11 @@ class Scout:
         self.headers = {}
         if self.github_token:
             self.headers["Authorization"] = f"token {self.github_token}"
+        self.timeout = self.config.get("extract_timeout", 15)
+        self.rate_limit_delay = self.config.get("rate_limit_delay", 2)
 
     def search_trending(self, keywords: list = None, max_results: int = 10) -> list:
-        """Search GitHub for trending repositories matching keywords."""
+        """Busca repositórios trending no GitHub por palavras-chave."""
         if keywords is None:
             keywords = self.config.get("scout_keywords", "agents,ai,automation").split(",")
 
@@ -39,9 +44,10 @@ class Scout:
                     "order": "desc",
                     "per_page": min(max_results, 30),
                 }
-                resp = requests.get(url, params=params, headers=self.headers, timeout=15)
+                resp = requests.get(url, params=params, headers=self.headers, timeout=self.timeout)
 
                 if resp.status_code != 200:
+                    logger.warning(f"Erro buscando '{keyword}': status {resp.status_code}")
                     continue
 
                 data = resp.json()
@@ -69,26 +75,27 @@ class Scout:
                     if len(results) >= max_results:
                         break
             except Exception as e:
-                print(f"[SCOUT] Error searching '{keyword}': {e}")
-                time.sleep(2)
+                logger.error(f"Erro buscando '{keyword}': {e}")
+                time.sleep(self.rate_limit_delay)
 
-        # Sort by stars descending
+        # Ordenar por estrelas descendente
         results.sort(key=lambda r: r.get("stars", 0), reverse=True)
         return results[:max_results]
 
     def get_repo_details(self, full_name: str) -> dict:
-        """Get detailed information about a repository."""
+        """Obtem informacoes detalhadas sobre um repositório."""
         try:
             url = f"https://api.github.com/repos/{full_name}"
-            resp = requests.get(url, headers=self.headers, timeout=15)
+            resp = requests.get(url, headers=self.headers, timeout=self.timeout)
             if resp.status_code == 200:
                 return resp.json()
-        except Exception:
-            pass
+            logger.warning(f"Erro obtendo detalhes de '{full_name}': status {resp.status_code}")
+        except Exception as e:
+            logger.error(f"Erro obtendo detalhes de '{full_name}': {e}")
         return {}
 
     def save_results(self, results: list, output_path: str = None) -> str:
-        """Save scout results to a JSON file."""
+        """Salva resultados do scout em um arquivo JSON."""
         if output_path is None:
             data_dir = Path(self.config.get("data_dir", "~/.clp/data")).expanduser()
             data_dir.mkdir(parents=True, exist_ok=True)
@@ -100,4 +107,5 @@ class Scout:
         with open(output_path, "w") as f:
             json.dump(results, f, indent=2)
 
+        logger.info(f"Resultados salvos em {output_path}")
         return output_path

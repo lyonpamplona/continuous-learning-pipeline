@@ -87,11 +87,14 @@ class FilePlugin(AgentPlugin):
 
 
 def get_plugin(plugin_type: str = "file", **kwargs) -> AgentPlugin:
-    """Factory function to get the appropriate plugin."""
+    """Factory function para obter o plugin apropriado."""
     if plugin_type == "file":
         return FilePlugin(**kwargs)
     elif plugin_type == "hermes":
         from clp.plugins.hermes import HermesPlugin
         return HermesPlugin(**kwargs)
+    elif plugin_type == "custom":
+        from clp.plugins.custom import CustomPlugin
+        return CustomPlugin(**kwargs)
     else:
-        raise ValueError(f"Unknown plugin type: {plugin_type}")
+        raise ValueError(f"Tipo de plugin desconhecido: {plugin_type}")

@@ -1,6 +1,7 @@
 """Modulo Extrator — analisa repositórios e gera arquivos SKILL.md."""
 
 import base64
+import logging
 import re
 import time
 from typing import Optional
@@ -8,9 +9,11 @@ from typing import Optional
 import requests
 import yaml
 
+logger = logging.getLogger(__name__)
+
 
 class Extractor:
-    """Extracts workflows from GitHub repositories and generates SKILL.md."""
+    """Analisa repositórios e gera arquivos SKILL.md."""
 
     def __init__(self, config=None):
         self.config = config or {}
@@ -18,29 +21,31 @@ class Extractor:
         self.headers = {}
         if self.github_token:
             self.headers["Authorization"] = f"token {self.github_token}"
+        self.timeout = self.config.get("extract_timeout", 15)
 
     def fetch_readme(self, full_name: str) -> str:
         """Buscar conteudo do README de um repositório."""
         try:
             url = f"https://api.github.com/repos/{full_name}/readme"
             params = {"ref": "main"}
-            resp = requests.get(url, headers=self.headers, params=params, timeout=15)
+            resp = requests.get(url, headers=self.headers, params=params, timeout=self.timeout)
             if resp.status_code == 200:
                 data = resp.json()
                 return base64.b64decode(data.get("content", "")).decode("utf-8", errors="replace")
-        except Exception:
-            pass
+            logger.warning(f"Erro buscando README de '{full_name}': status {resp.status_code}")
+        except Exception as e:
+            logger.error(f"Erro buscando README de '{full_name}': {e}")
         return ""
 
     def fetch_files(self, full_name: str, path: str = "") -> list:
-        """Fetch file tree from a repository."""
+        """Busca arvores de arquivos de um repositório."""
         try:
             url = f"https://api.github.com/repos/{full_name}/contents/{path}"
-            resp = requests.get(url, headers=self.headers, timeout=15)
+            resp = requests.get(url, headers=self.headers, timeout=self.timeout)
             if resp.status_code == 200:
                 return resp.json()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"Erro buscando arquivos de '{full_name}/{path}': {e}")
         return []
 
     def analyze_readme(self, readme: str) -> dict:

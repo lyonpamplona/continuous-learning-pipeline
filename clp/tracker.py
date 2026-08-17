@@ -1,6 +1,7 @@
-"""Tracker module — monitors existing skills for updates."""
+"""Modulo Tracker — monitora atualizacoes de repositórios fonte."""
 
 import json
+import logging
 import time
 from datetime import datetime
 from pathlib import Path
@@ -8,9 +9,11 @@ from typing import Optional
 
 import requests
 
+logger = logging.getLogger(__name__)
+
 
 class Tracker:
-    """Monitors existing skills for repository updates."""
+    """Monitora atualizacoes de repositórios fonte."""
 
     def __init__(self, config=None):
         self.config = config or {}
@@ -18,6 +21,8 @@ class Tracker:
         self.headers = {}
         if self.github_token:
             self.headers["Authorization"] = f"token {self.github_token}"
+        self.timeout = self.config.get("extract_timeout", 15)
+        self.rate_limit_delay = self.config.get("rate_limit_delay", 1)
         self.tracker_file = Path(self.config.get("data_dir", "~/.clp/data")).expanduser() / "skill-updates.json"
         self.tracker_file.parent.mkdir(parents=True, exist_ok=True)
         self._load_tracker()
@@ -43,7 +48,7 @@ class Tracker:
         self._save_tracker()
 
     def check_updates(self, name: str) -> Optional[dict]:
-        """Check if a skill's source repository has updates."""
+        """Verifica se o repositório fonte de uma skill tem atualizacoes."""
         skill = self.tracker_data["skills"].get(name)
         if not skill:
             return None
@@ -55,36 +60,36 @@ class Tracker:
             if skill.get("last_checked"):
                 params["since"] = skill["last_checked"]
 
-            resp = requests.get(url, headers=self.headers, params=params, timeout=15)
+            resp = requests.get(url, headers=self.headers, params=params, timeout=self.timeout)
             if resp.status_code == 200:
                 commits = resp.json()
                 if commits:
                     skill["commits_since_check"] = len(commits)
                     skill["last_updated"] = commits[0]["commit"]["committer"]["date"]
-                    print(f"[TRACKER] {name}: {len(commits)} new commit(s)")
+                    logger.info(f"{name}: {len(commits)} novo(s) commit(s)")
                 else:
-                    print(f"[TRACKER] {name}: no new commits")
+                    logger.info(f"{name}: sem novos commits")
             else:
-                print(f"[TRACKER] {name}: API error {resp.status_code}")
+                logger.warning(f"{name}: erro API {resp.status_code}")
         except Exception as e:
-            print(f"[TRACKER] {name}: error - {e}")
+            logger.error(f"{name}: erro - {e}")
 
         skill["last_checked"] = datetime.now().isoformat()
         self._save_tracker()
         return skill
 
     def check_all(self) -> list:
-        """Check all registered skills for updates."""
+        """Verifica todas as skills registradas por atualizacoes."""
         results = []
         for name in self.tracker_data["skills"]:
             result = self.check_updates(name)
             if result:
                 results.append(result)
-            time.sleep(1)  # Rate limiting
+            time.sleep(self.rate_limit_delay)
         return results
 
     def get_pending(self) -> list:
-        """Get skills with pending updates."""
+        """Obtem skills com atualizacoes pendentes."""
         pending = []
         for name, skill in self.tracker_data["skills"].items():
             if skill.get("commits_since_check", 0) > 0:

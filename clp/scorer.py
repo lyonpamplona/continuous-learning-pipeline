@@ -1,12 +1,15 @@
 """Modulo Scorer — avalia qualidade de SKILL.md com criterios objetivos."""
 
+import logging
 import re
 
 import yaml
 
+logger = logging.getLogger(__name__)
+
 
 class Scorer:
-    """Evaluates SKILL.md files with 10 objective criteria."""
+    """Avalia qualidade de SKILL.md com 10 criterios objetivos."""
 
     def __init__(self, min_pass: int = 70, max_size: int = 100000):
         self.min_pass = min_pass
