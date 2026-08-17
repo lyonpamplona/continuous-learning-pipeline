@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  clp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clp
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - CLP_SKILLS_DIR=/clp/skills
+      - CLP_WORKSPACE_DIR=/clp/workspace
+      - CLP_REPORTS_DIR=/clp/reports
+      - CLP_DATA_DIR=/clp/data
+      - CLP_PLUGIN_TYPE=file
+      - DASHBOARD_PORT=8080
+    volumes:
+      - clp-data:/clp
+      - ./config.yaml:/clp/config.yaml:ro
+    ports:
+      - "8080:8080"
+    command: >
+      bash -c "
+        clp scout --keywords agents,ai,automation --max-results 10 &&
+        clp pipeline --keywords agents,ai --max-results 5 &&
+        clp dashboard --html --serve
+      "
+    restart: unless-stopped
+
+volumes:
+  clp-data:
+    driver: local
