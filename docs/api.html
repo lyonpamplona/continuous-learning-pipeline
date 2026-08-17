@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLP — API Técnica</title>
+<style>
+:root{
+--bg:#0a0e14;--bg2:#0d1117;--bg3:#161b22;--bg4:#1c2128;
+--border:#21262d;--border2:#30363d;
+--text:#e6edf3;--text2:#8b949e;--text3:#484f58;
+--pass:#3fb950;--fail:#f85149;--warn:#d29922;--info:#58a6ff;
+--mono:'JetBrains Mono','Fira Code','SF Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--mono);background:var(--bg);color:var(--text);line-height:1.6}
+.container{max-width:1000px;margin:0 auto;padding:24px}
+header{padding:32px 0;border-bottom:1px solid var(--border);margin-bottom:32px}
+h1{font-size:24px;margin-bottom:8px}
+h2{font-size:18px;margin:24px 0 12px;color:var(--info);border-left:3px solid var(--info);padding-left:12px}
+h3{font-size:14px;margin:16px 0 8px;color:var(--text2)}
+table{width:100%;border-collapse:collapse;margin:12px 0}
+th,td{text-align:left;padding:8px 12px;border:1px solid var(--border);font-size:12px}
+th{background:var(--bg3);color:var(--text2);font-weight:600}
+td{color:var(--text2)}
+code{background:var(--bg3);padding:2px 6px;border-radius:3px;font-size:12px;color:var(--pass)}
+.method{display:inline-block;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700;margin-right:8px}
+.method-get{background:rgba(63,185,80,.15);color:var(--pass);border:1px solid rgba(63,185,80,.3)}
+.method-post{background:rgba(88,166,255,.15);color:var(--info);border:1px solid rgba(88,166,255,.3)}
+.method-put{background:rgba(210,153,34,.15);color:var(--warn);border:1px solid rgba(210,153,34,.3)}
+.method-del{background:rgba(248,81,73,.15);color:var(--fail);border:1px solid rgba(248,81,73,.3)}
+.param{margin:8px 0;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:4px}
+.param-name{color:var(--info);font-weight:600}
+.param-type{color:var(--text3);font-size:11px}
+.param-desc{color:var(--text2);font-size:12px;margin-top:4px}
+section{padding:24px 0;border-bottom:1px solid var(--border)}
+section:last-child{border-bottom:none}
+footer{text-align:center;padding:32px 0;color:var(--text3);font-size:12px;border-top:1px solid var(--border);margin-top:32px}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>CLP — API Técnica</h1>
+<p style="color:var(--text2);font-size:13px">Documentação completa de todos os módulos e métodos públicos</p>
+</header>
+
+<section>
+<h2>clp.scout</h2>
+<h3>Classe Scout</h3>
+<p style="font-size:13px;color:var(--text2);margin-bottom:16px">Descobre repositórios relevantes no GitHub usando a API de busca.</p>
+
+<table>
+<tr><th>Método</th><th>Parâmetros</th><th>Retorna</th><th>Descrição</th></tr>
+<tr>
+<td><code>search_trending(keywords, max_results)</code></td>
+<td><code>keywords: list</code>, <code>max_results: int</code></td>
+<td><code>list[dict]</code></td>
+<td>Busca repositórios por palavras-chave ordenados por estrelas</td>
+</tr>
+<tr>
+<td><code>get_repo_details(full_name)</code></td>
+<td><code>full_name: str</code></td>
+<td><code>dict</code></td>
+<td>Obtém detalhes completos de um repositório</td>
+</tr>
+<tr>
+<td><code>save_results(results, output_path)</code></td>
+<td><code>results: list</code>, <code>output_path: str</code></td>
+<td><code>str</code></td>
+<td>Salva resultados em arquivo JSON</td>
+</tr>
+</table>
+
+<h3>Exemplo de Uso</h3>
+<div style="background:var(--bg3);padding:12px;border-radius:4px;font-size:12px;margin:8px 0">
+<pre style="color:var(--text2)">from clp.scout import Scout
+from clp.config import Config
+
+config = Config()
+scout = Scout(config)
+results = scout.search_trending(["agents", "ai"], max_results=10)
+for repo in results:
+    print(f"{repo['full_name']} - {repo['stars']} stars")
+</pre>
+</div>
+</section>
+
+<section>
+<h2>clp.extractor</h2>
+<h3>Classe Extractor</h3>
+<p style="font-size:13px;color:var(--text2);margin-bottom:16px">Analisa repositórios e gera arquivos SKILL.md.</p>
+
+<table>
+<tr><th>Método</th><th>Parâmetros</th><th>Retorna</th><th>Descrição</th></tr>
+<tr>
+<td><code>fetch_readme(full_name)</code></td>
+<td><code>full_name: str</code></td>
+<td><code>str</code></td>
+<td>Busca conteúdo do README de um repositório</td>
+</tr>
+<tr>
+<td><code>analyze_readme(readme)</code></td>
+<td><code>readme: str</code></td>
+<td><code>dict</code></td>
+<td>Analisa README para extrair propósito, seções, comandos</td>
+</tr>
+<tr>
+<td><code>identify_workflows(readme_info, metadata)</code></td>
+<td><code>readme_info: dict</code>, <code>metadata: dict</code></td>
+<td><code>list[dict]</code></td>
+<td>Identifica workflows reutilizáveis a partir dos dados</td>
+</tr>
+<tr>
+<td><code>generate_skill_md(repo_name, metadata, readme_info, workflows, skill_name)</code></td>
+<td><code>repo_name: str</code>, <code>metadata: dict</code>, <code>readme_info: dict</code>, <code>workflows: list</code>, <code>skill_name: str</code></td>
+<td><code>str</code></td>
+<td>Gera conteúdo SKILL.md completo</td>
+</tr>
+<tr>
+<td><code>extract(full_name, skill_name)</code></td>
+<td><code>full_name: str</code>, <code>skill_name: str</code></td>
+<td><code>str</code></td>
+<td>Pipeline completo: busca metadata, README, gera SKILL.md</td>
+</tr>
+</table>
+</section>
+
+<section>
+<h2>clp.scorer</h2>
+<h3>Classe Scorer</h3>
+<p style="font-size:13px;color:var(--text2);margin-bottom:16px">Avalia qualidade de SKILL.md com 10 critérios objetivos.</p>
+
+<table>
+<tr><th>Método</th><th>Parâmetros</th><th>Retorna</th><th>Descrição</th></tr>
+<tr>
+<td><code>load_skill(path)</code></td>
+<td><code>path: str</code></td>
+<td><code>dict</code></td>
+<td>Carrega e parseia SKILL.md (frontmatter + corpo)</td>
+</tr>
+<tr>
+<td><code>score(skill_data)</code></td>
+<td><code>skill_data: dict</code></td>
+<td><code>dict</code></td>
+<td>Retorna score (0-100), decisão (PASS/REJECT), checks</td>
+</tr>
+</table>
+
+<h3>Critérios de Avaliação</h3>
+<table>
+<tr><th>Critério</th><th>Pontos</th><th>Descrição</th></tr>
+<tr><td>Frontmatter completo</td><td>15</td><td>name, trigger, description, version presentes</td></tr>
+<tr><td>Description ≤ 60 chars</td><td>10</td><td>Descrição curta e objetiva</td></tr>
+<tr><td>Termina com ponto</td><td>5</td><td>Descrição termina com "."</td></tr>
+<tr><td>Seções essenciais</td><td>20</td><td>"When to Use" e "Procedure" presentes</td></tr>
+<tr><td>Procedure ≥ 3 passos</td><td>15</td><td>Procedimento com pelo menos 3 passos</td></tr>
+<tr><td>Pitfalls ≥ 2 itens</td><td>10</td><td>Pitfalls com pelo menos 2 itens</td></tr>
+<tr><td>Sem palavras de marketing</td><td>5</td><td>Sem termos como "revolutionary"</td></tr>
+<tr><td>Tamanho ≤ max_size</td><td>5</td><td>Arquivo dentro do limite de tamanho</td></tr>
+<tr><td>Author credita humano</td><td>5</td><td>Autor não é "CLP Pipeline"</td></tr>
+<tr><td>Name válido</td><td>5</td><td>Nome segue padrão [a-z][a-z0-9-]*</td></tr>
+</table>
+</section>
+
+<section>
+<h2>clp.publisher</h2>
+<h3>Classe Publisher</h3>
+<p style="font-size:13px;color:var(--text2);margin-bottom:16px">Publica skills aprovadas no framework de agente.</p>
+
+<table>
+<tr><th>Método</th><th>Parâmetros</th><th>Retorna</th><th>Descrição</th></tr>
+<tr>
+<td><code>publish(skill_path, name, category)</code></td>
+<td><code>skill_path: str</code>, <code>name: str</code>, <code>category: str</code></td>
+<td><code>bool</code></td>
+<td>Publica uma skill a partir de um caminho</td>
+</tr>
+<tr>
+<td><code>publish_from_workspace(workspace_dir)</code></td>
+<td><code>workspace_dir: str</code></td>
+<td><code>list[str]</code></td>
+<td>Publica todas skills aprovadas do workspace</td>
+</tr>
+<tr>
+<td><code>list_published()</code></td>
+<td>—</td>
+<td><code>list[dict]</code></td>
+<td>Lista todas skills publicadas</td>
+</tr>
+</table>
+</section>
+
+<section>
+<h2>clp.tracker</h2>
+<h3>Classe Tracker</h3>
+<p style="font-size:13px;color:var(--text2);margin-bottom:16px">Monitora atualizações de repositórios fonte.</p>
+
+<table>
+<tr><th>Método</th><th>Parâmetros</th><th>Retorna</th><th>Descrição</th></tr>
+<tr>
+<td><code>register_skill(name, repo)</code></td>
+<td><code>name: str</code>, <code>repo: str</code></td>
+<td><code>None</code></td>
+<td>Registra uma skill para monitoramento</td>
+</tr>
+<tr>
+<td><code>check_updates(name)</code></td>
+<td><code>name: str</code></td>
+<td><code>dict</code></td>
+<td>Verifica atualizações de um repositório</td>
+</tr>
+<tr>
+<td><code>check_all()</code></td>
+<td>—</td>
+<td><code>list[dict]</code></td>
+<td>Verifica todas skills registradas</td>
+</tr>
+<tr>
+<td><code>get_pending()</code></td>
+<td>—</td>
+<td><code>list[dict]</code></td>
+<td>Retorna skills com atualizações pendentes</td>
+</tr>
+</table>
+</section>
+
+<section>
+<h2>clp.dashboard</h2>
+<h3>Classe Dashboard</h3>
+<p style="font-size:13px;color:var(--text2);margin-bottom:16px">Gera dashboard web para revisão de skills.</p>
+
+<table>
+<tr><th>Método</th><th>Parâmetros</th><th>Retorna</th><th>Descrição</th></tr>
+<tr>
+<td><code>generate(pending_dir, approved_dir, rejected_dir, generate_html)</code></td>
+<td><code>pending_dir: str</code>, <code>approved_dir: str</code>, <code>rejected_dir: str</code>, <code>generate_html: bool</code></td>
+<td><code>dict</code></td>
+<td>Gera dashboard HTML e Markdown</td>
+</tr>
+</table>
+</section>
+
+<section>
+<h2>clp.plugins</h2>
+<h3>Interface Base AgentPlugin</h3>
+<p style="font-size:13px;color:var(--text2);margin-bottom:16px">Interface abstrata para plugins de integração com frameworks de agentes.</p>
+
+<table>
+<tr><th>Método</th><th>Parâmetros</th><th>Retorna</th><th>Descrição</th></tr>
+<tr>
+<td><code>create_skill(name, content, category)</code></td>
+<td><code>name: str</code>, <code>content: str</code>, <code>category: str</code></td>
+<td><code>bool</code></td>
+<td>Cria uma skill no framework</td>
+</tr>
+<tr>
+<td><code>update_skill(name, content)</code></td>
+<td><code>name: str</code>, <code>content: str</code></td>
+<td><code>bool</code></td>
+<td>Atualiza uma skill existente</td>
+</tr>
+<tr>
+<td><code>delete_skill(name)</code></td>
+<td><code>name: str</code></td>
+<td><code>bool</code></td>
+<td>Remove uma skill</td>
+</tr>
+<tr>
+<td><code>list_skills()</code></td>
+<td>—</td>
+<td><code>list[dict]</code></td>
+<td>Lista todas skills</td>
+</tr>
+<tr>
+<td><code>notify(message, level)</code></td>
+<td><code>message: str</code>, <code>level: str</code></td>
+<td><code>bool</code></td>
+<td>Envia notificação ao usuário</td>
+</tr>
+<tr>
+<td><code>schedule_job(name, schedule, callback)</code></td>
+<td><code>name: str</code>, <code>schedule: str</code>, <code>callback: str</code></td>
+<td><code>bool</code></td>
+<td>Agenda um job periódico</td>
+</tr>
+</table>
+
+<h3>Plugins Disponíveis</h3>
+<table>
+<tr><th>Plugin</th><th>Descrição</th><th>Uso</th></tr>
+<tr><td><code>FilePlugin</code></td><td>Modo standalone, salva skills em disco</td><td><code>get_plugin("file")</code></td></tr>
+<tr><td><code>HermesPlugin</code></td><td>Integração nativa com Hermes Agent</td><td><code>get_plugin("hermes")</code></td></tr>
+</table>
+</section>
+
+<section>
+<h2>clp.config</h2>
+<h3>Classe Config</h3>
+<p style="font-size:13px;color:var(--text2);margin-bottom:16px">Gerenciamento de configuração com suporte a variáveis de ambiente e arquivo YAML.</p>
+
+<table>
+<tr><th>Método</th><th>Parâmetros</th><th>Retorna</th><th>Descrição</th></tr>
+<tr>
+<td><code>get(key, default)</code></td>
+<td><code>key: str</code>, <code>default: any</code></td>
+<td><code>any</code></td>
+<td>Obtém valor de configuração</td>
+</tr>
+<tr>
+<td><code>set(key, value)</code></td>
+<td><code>key: str</code>, <code>value: any</code></td>
+<td><code>None</code></td>
+<td>Define valor de configuração</td>
+</tr>
+</table>
+
+<h3>Configurações Disponíveis</h3>
+<table>
+<tr><th>Chave</th><th>Padrão</th><th>Descrição</th></tr>
+<tr><td><code>github_token</code></td><td><code>""</code></td><td>Token da API GitHub</td></tr>
+<tr><td><code>scout_keywords</code></td><td><code>"agents,ai,automation"</code></td><td>Palavras-chave para busca</td></tr>
+<tr><td><code>scout_max_results</code></td><td><code>10</code></td><td>Máximo de resultados</td></tr>
+<tr><td><code>score_min_pass</code></td><td><code>70</code></td><td>Pontuação mínima para aprovação</td></tr>
+<tr><td><code>dashboard_port</code></td><td><code>8080</code></td><td>Porta do servidor dashboard</td></tr>
+<tr><td><code>skills_dir</code></td><td><code>"~/.clp/skills"</code></td><td>Diretório de skills</td></tr>
+<tr><td><code>workspace_dir</code></td><td><code>"~/.clp/workspace"</code></td><td>Diretório de workspace</td></tr>
+<tr><td><code>reports_dir</code></td><td><code>"~/.clp/reports"</code></td><td>Diretório de relatórios</td></tr>
+<tr><td><code>data_dir</code></td><td><code>"~/.clp/data"</code></td><td>Diretório de dados</td></tr>
+<tr><td><code>plugin_type</code></td><td><code>"file"</code></td><td>Tipo de plugin padrão</td></tr>
+</table>
+</section>
+
+<footer>
+<p>CLP — Continuous Learning Pipeline v0.1.0</p>
+<p style="margin-top:8px">lyon christopher — Hermes Agent</p>
+</footer>
+</div>
+</body>
+</html>

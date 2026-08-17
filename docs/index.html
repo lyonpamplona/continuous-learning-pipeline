@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLP — Continuous Learning Pipeline</title>
+<style>
+:root{
+--bg:#0a0e14;--bg2:#0d1117;--bg3:#161b22;--bg4:#1c2128;
+--border:#21262d;--border2:#30363d;
+--text:#e6edf3;--text2:#8b949e;--text3:#484f58;
+--pass:#3fb950;--fail:#f85149;--warn:#d29922;--info:#58a6ff;
+--mono:'JetBrains Mono','Fira Code','SF Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--mono);background:var(--bg);color:var(--text);line-height:1.6}
+.container{max-width:900px;margin:0 auto;padding:24px}
+header{text-align:center;padding:48px 0;border-bottom:1px solid var(--border)}
+h1{font-size:28px;margin-bottom:8px;letter-spacing:-0.5px}
+.subtitle{color:var(--text2);font-size:14px}
+.badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;margin:4px}
+.badge-green{background:rgba(63,185,80,.15);color:var(--pass);border:1px solid rgba(63,185,80,.3)}
+.badge-blue{background:rgba(88,166,255,.15);color:var(--info);border:1px solid rgba(88,166,255,.3)}
+.badge-warn{background:rgba(210,153,34,.15);color:var(--warn);border:1px solid rgba(210,153,34,.3)}
+section{padding:32px 0;border-bottom:1px solid var(--border)}
+section:last-child{border-bottom:none}
+h2{font-size:20px;margin-bottom:16px;color:var(--info)}
+h3{font-size:16px;margin:16px 0 8px;color:var(--text2)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:16px 0}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px;transition:border-color .15s}
+.card:hover{border-color:var(--border2)}
+.card h4{font-size:14px;margin-bottom:4px}
+.card p{font-size:12px;color:var(--text2)}
+.code{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:12px;margin:12px 0;font-size:13px;overflow-x:auto}
+.code span{color:var(--pass)}
+ul{list-style:none;padding:0}
+ul li{padding:4px 0;font-size:13px;color:var(--text2)}
+ul li::before{content:'- ';color:var(--text3)}
+.stats{display:flex;gap:24px;margin:16px 0;flex-wrap:wrap}
+.stat{text-align:center}
+.stat-num{font-size:24px;font-weight:700;color:var(--info)}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
+svg{display:block;margin:0 auto}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.pulse{animation:pulse 2s ease-in-out infinite}
+footer{text-align:center;padding:32px 0;color:var(--text3);font-size:12px}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<!-- SVG Logo Animado -->
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+<rect x="4" y="4" width="72" height="72" rx="12" fill="none" stroke="#30363d" stroke-width="2"/>
+<rect x="4" y="4" width="72" height="72" rx="12" fill="none" stroke="#58a6ff" stroke-width="2" stroke-dasharray="8 4">
+<animateTransform attributeName="transform" type="rotate" from="0 40 40" to="360 40 40" dur="20s" repeatCount="indefinite"/>
+</rect>
+<text x="40" y="36" text-anchor="middle" fill="#e6edf3" font-family="monospace" font-size="18" font-weight="bold">CLP</text>
+<text x="40" y="54" text-anchor="middle" fill="#484f58" font-family="monospace" font-size="8">v0.1.0</text>
+<circle cx="40" cy="12" r="3" fill="#3fb950">
+<animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+</circle>
+</svg>
+<h1>Continuous Learning Pipeline</h1>
+<p class="subtitle">Descoberta automatizada de skills para agentes de IA</p>
+<div style="margin-top:16px">
+<span class="badge badge-green">Python 3.10+</span>
+<span class="badge badge-blue">MIT License</span>
+<span class="badge badge-warn">Alpha</span>
+</div>
+</header>
+
+<section>
+<h2>Visão Geral</h2>
+<p style="font-size:14px;color:var(--text2);margin-bottom:16px">
+O CLP é um sistema automatizado que descobre, extrai, pontua e publica Agent Skills a partir de repositórios GitHub.
+Funciona como ferramenta standalone ou se integra com frameworks de agentes como Hermes Agent.
+</p>
+<div class="stats">
+<div class="stat"><div class="stat-num">9</div><div class="stat-label">Módulos</div></div>
+<div class="stat"><div class="stat-num">1.4k</div><div class="stat-label">Linhas de código</div></div>
+<div class="stat"><div class="stat-num">10</div><div class="stat-label">Critérios de score</div></div>
+<div class="stat"><div class="stat-num">3</div><div class="stat-label">Plugins</div></div>
+</div>
+</section>
+
+<section>
+<h2>Arquitetura</h2>
+<!-- SVG Diagrama de Arquitetura -->
+<svg width="100%" height="280" viewBox="0 0 800 280" xmlns="http://www.w3.org/2000/svg">
+<!-- Fundo -->
+<rect x="0" y="0" width="800" height="280" fill="none"/>
+<!-- Módulos principais -->
+<rect x="20" y="100" width="140" height="80" rx="6" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+<text x="90" y="135" text-anchor="middle" fill="#e6edf3" font-family="monospace" font-size="13" font-weight="bold">SCOUT</text>
+<text x="90" y="155" text-anchor="middle" fill="#484f58" font-family="monospace" font-size="10">Descoberta</text>
+
+<rect x="200" y="100" width="140" height="80" rx="6" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+<text x="270" y="135" text-anchor="middle" fill="#e6edf3" font-family="monospace" font-size="13" font-weight="bold">EXTRACT</text>
+<text x="270" y="155" text-anchor="middle" fill="#484f58" font-family="monospace" font-size="10">Extração</text>
+
+<rect x="380" y="100" width="140" height="80" rx="6" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+<text x="450" y="135" text-anchor="middle" fill="#e6edf3" font-family="monospace" font-size="13" font-weight="bold">SCORE</text>
+<text x="450" y="155" text-anchor="middle" fill="#484f58" font-family="monospace" font-size="10">Avaliação</text>
+
+<rect x="560" y="100" width="140" height="80" rx="6" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+<text x="630" y="135" text-anchor="middle" fill="#e6edf3" font-family="monospace" font-size="13" font-weight="bold">PUBLISH</text>
+<text x="630" y="155" text-anchor="middle" fill="#484f58" font-family="monospace" font-size="10">Publicação</text>
+
+<!-- Setas de fluxo -->
+<line x1="160" y1="140" x2="195" y2="140" stroke="#30363d" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="340" y1="140" x2="375" y2="140" stroke="#30363d" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="520" y1="140" x2="555" y2="140" stroke="#30363d" stroke-width="2" marker-end="url(#arrow)"/>
+
+<!-- Feedback loop -->
+<path d="M 630 180 L 630 230 L 90 230 L 90 180" fill="none" stroke="#3fb950" stroke-width="1" stroke-dasharray="4 4" opacity="0.5">
+<animate attributeName="stroke-dashoffset" from="0" to="-16" dur="2s" repeatCount="indefinite"/>
+</path>
+<text x="360" y="250" text-anchor="middle" fill="#3fb950" font-family="monospace" font-size="10" opacity="0.7">FEEDBACK LOOP</text>
+
+<!-- Plugins -->
+<rect x="200" y="20" width="140" height="50" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+<text x="270" y="42" text-anchor="middle" fill="#8b949e" font-family="monospace" font-size="11">FILE PLUGIN</text>
+<text x="270" y="58" text-anchor="middle" fill="#484f58" font-family="monospace" font-size="9">Standalone</text>
+
+<rect x="380" y="20" width="140" height="50" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+<text x="450" y="42" text-anchor="middle" fill="#8b949e" font-family="monospace" font-size="11">HERMES PLUGIN</text>
+<text x="450" y="58" text-anchor="middle" fill="#484f58" font-family="monospace" font-size="9">Integração nativa</text>
+
+<rect x="560" y="20" width="140" height="50" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+<text x="630" y="42" text-anchor="middle" fill="#8b949e" font-family="monospace" font-size="11">CUSTOM PLUGIN</text>
+<text x="630" y="58" text-anchor="middle" fill="#484f58" font-family="monospace" font-size="9">Extensível</text>
+
+<!-- Marcadores -->
+<line x1="270" y1="70" x2="270" y2="100" stroke="#30363d" stroke-width="1" stroke-dasharray="2 2"/>
+<line x1="450" y1="70" x2="450" y2="100" stroke="#30363d" stroke-width="1" stroke-dasharray="2 2"/>
+<line x1="630" y1="70" x2="630" y2="100" stroke="#30363d" stroke-width="1" stroke-dasharray="2 2"/>
+
+<!-- Marcador de seta -->
+<defs>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+<path d="M0,0 L8,3 L0,6 Z" fill="#30363d"/>
+</marker>
+</defs>
+</svg>
+</section>
+
+<section>
+<h2>Módulos</h2>
+<div class="grid">
+<div class="card">
+<h4>clp.scout</h4>
+<p>Descobre repositórios GitHub por palavras-chave</p>
+</div>
+<div class="card">
+<h4>clp.extractor</h4>
+<p>Analisa README e gera SKILL.md</p>
+</div>
+<div class="card">
+<h4>clp.scorer</h4>
+<p>Avalia qualidade com 10 critérios</p>
+</div>
+<div class="card">
+<h4>clp.publisher</h4>
+<p>Publica skills aprovadas</p>
+</div>
+<div class="card">
+<h4>clp.tracker</h4>
+<p>Monitora atualizações de repositórios</p>
+</div>
+<div class="card">
+<h4>clp.dashboard</h4>
+<p>Dashboard web estilo CLI/IDE</p>
+</div>
+<div class="card">
+<h4>clp.cli</h4>
+<p>Interface de linha de comando</p>
+</div>
+<div class="card">
+<h4>clp.config</h4>
+<p>Gerenciamento de configuração</p>
+</div>
+<div class="card">
+<h4>clp.plugins</h4>
+<p>Sistema de plugins extensível</p>
+</div>
+</div>
+</section>
+
+<section>
+<h2>Instalação</h2>
+<h3>Standalone</h3>
+<div class="code"><span>$</span> pip install continuous-learning-pipeline</div>
+<h3>Com Hermes Agent</h3>
+<div class="code"><span>$</span> pip install continuous-learning-pipeline[hermes]</div>
+<h3>Do repositório</h3>
+<div class="code"><span>$</span> git clone https://github.com/lyonchristopher/continuous-learning-pipeline.git<br><span>$</span> cd continuous-learning-pipeline<br><span>$</span> pip install -e .</div>
+</section>
+
+<section>
+<h2>Comandos Rápidos</h2>
+<div class="code">
+<span>$</span> clp scout --keywords "agents,ai" --max-results 10<br>
+<span>$</span> clp extract --repo langchain-ai/langchain<br>
+<span>$</span> clp score --skill ./SKILL.md<br>
+<span>$</span> clp publish --skill ./SKILL.md<br>
+<span>$</span> clp dashboard --html --serve<br>
+<span>$</span> clp pipeline --keywords "agents,ai" --max-results 5
+</div>
+</section>
+
+<section>
+<h2>Dependências</h2>
+<ul>
+<li>pyyaml >= 6.0</li>
+<li>requests >= 2.31.0</li>
+<li>python-dateutil >= 2.8.0</li>
+</ul>
+</section>
+
+<footer>
+<p>lyon christopher — Hermes Agent</p>
+<p style="margin-top:8px">MIT License</p>
+</footer>
+</div>
+</body>
+</html>
