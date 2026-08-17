@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class Publisher:
-    """Publishes approved skills to the agent framework."""
+    """Publica skills aprovadas no framework de agente."""
 
     def __init__(self, plugin: Optional[AgentPlugin] = None, config=None):
         self.plugin = plugin or get_plugin("file")
@@ -24,7 +24,7 @@ class Publisher:
         """Publicar uma skill a partir de um caminho de arquivo."""
         skill_file = Path(skill_path)
         if not skill_file.exists():
-            print(f"[PUBLISH] Arquivo nao encontrado: {skill_path}")
+            logger.error(f"Arquivo nao encontrado: {skill_path}")
             return False
 
         content = skill_file.read_text()
@@ -37,19 +37,19 @@ class Publisher:
 
         success = self.plugin.create_skill(name, content, category)
         if success:
-            print(f"[PUBLISH] Skill '{name}' published successfully.")
+            logger.info(f"Skill '{name}' publicada com sucesso.")
         else:
-            print(f"[PUBLISH] Failed to publish '{name}'.")
+            logger.error(f"Falha ao publicar '{name}'.")
         return success
 
     def publish_from_workspace(self, workspace_dir: str = None) -> list:
-        """Publish all approved skills from workspace."""
+        """Publicar todas as skills aprovadas do workspace."""
         if workspace_dir is None:
             workspace_dir = self.config.get("workspace_dir", "~/.clp/workspace")
 
         approved_dir = Path(workspace_dir).expanduser() / "approved"
         if not approved_dir.exists():
-            print(f"[PUBLISH] No approved directory found: {approved_dir}")
+            logger.warning(f"Diretorio de aprovadas nao encontrado: {approved_dir}")
             return []
 
         published = []
@@ -61,7 +61,7 @@ class Publisher:
                     success = self.publish(str(skill_file), name=name)
                     if success:
                         published.append(name)
-                        # Move to published archive
+                        # Mover para arquivo publicado
                         published_dir = Path(workspace_dir).expanduser() / "published" / name
                         published_dir.mkdir(parents=True, exist_ok=True)
                         shutil.move(str(skill_file), str(published_dir / "SKILL.md"))
@@ -69,5 +69,5 @@ class Publisher:
         return published
 
     def list_published(self) -> list:
-        """List all published skills."""
+        """Listar todas as skills publicadas."""
         return self.plugin.list_skills()

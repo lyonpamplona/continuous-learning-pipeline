@@ -49,7 +49,7 @@ class Extractor:
         return []
 
     def analyze_readme(self, readme: str) -> dict:
-        """Analyze README content for workflow information."""
+        """Analisa conteudo do README por informacoes de workflow."""
         info = {
             "purpose": "",
             "features": [],
@@ -59,7 +59,7 @@ class Extractor:
             "sections": [],
         }
 
-        # Extract purpose from first paragraph
+        # Extrair proposito do primeiro paragrafo
         lines = readme.split("\n")
         purpose_lines = []
         for line in lines:
@@ -71,7 +71,7 @@ class Extractor:
             purpose_lines.append(line)
         info["purpose"] = " ".join(purpose_lines[:3])
 
-        # Extract sections
+        # Extrair secoes
         current_section = ""
         current_content = []
         for line in lines:
@@ -91,13 +91,13 @@ class Extractor:
                 "content": "\n".join(current_content),
             })
 
-        # Extract code blocks (commands)
+        # Extrair blocos de codigo (comandos)
         code_blocks = re.findall(r"```(?:bash|sh|shell)?\s*\n(.*?)```", readme, re.DOTALL)
         for block in code_blocks:
             commands = [c.strip() for c in block.strip().split("\n") if c.strip() and not c.strip().startswith("#")]
             info["commands"].extend(commands)
 
-        # Extract features from bullet lists
+        # Extrair features de listas com marcadores
         for section in info["sections"]:
             if "feature" in section["title"].lower():
                 for line in section["content"].split("\n"):
@@ -108,30 +108,30 @@ class Extractor:
         return info
 
     def identify_workflows(self, readme_info: dict, metadata: dict) -> list:
-        """Identify reusable workflows from repository data."""
+        """Identifica workflows reutilizaveis a partir dos dados do repositório."""
         workflows = []
 
-        # Analyze commands for CLI workflows
+        # Analisar comandos para workflows de CLI
         if readme_info.get("commands"):
             workflows.append({
                 "name": "cli-usage",
                 "type": "command-line",
-                "description": "CLI commands and usage patterns",
+                "description": "Comandos CLI e padroes de uso",
                 "commands": readme_info["commands"][:10],
             })
 
-        # Analyze sections for procedural workflows
+        # Analisar secoes para workflows procedurais
         for section in readme_info.get("sections", []):
             title = section["title"].lower()
             if any(kw in title for kw in ["install", "setup", "configure", "deploy", "usage", "example"]):
                 workflows.append({
                     "name": f"{title}-workflow",
                     "type": "procedure",
-                    "description": f"{section['title']} procedure",
+                    "description": f"Procedimento {section['title']}",
                     "content": section["content"][:500],
                 })
 
-        # Add general workflow from purpose
+        # Adicionar workflow geral a partir do proposito
         if readme_info.get("purpose"):
             workflows.append({
                 "name": "general-usage",
@@ -219,18 +219,18 @@ metadata:
         return skill_content
 
     def extract(self, full_name: str, skill_name: str = None) -> Optional[str]:
-        """Full extraction pipeline for a repository."""
-        # Fetch metadata
+        """Pipeline completo de extracao para um repositório."""
+        # Buscar metadata
         metadata = {}
         try:
             url = f"https://api.github.com/repos/{full_name}"
-            resp = requests.get(url, headers=self.headers, timeout=15)
+            resp = requests.get(url, headers=self.headers, timeout=self.timeout)
             if resp.status_code == 200:
                 metadata = resp.json()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"Erro buscando metadata de '{full_name}': {e}")
 
-        # Fetch and analyze README
+        # Buscar e analisar README
         readme = self.fetch_readme(full_name)
         if not readme:
             return None
@@ -238,5 +238,5 @@ metadata:
         readme_info = self.analyze_readme(readme)
         workflows = self.identify_workflows(readme_info, metadata)
 
-        # Generate SKILL.md
+        # Gerar SKILL.md
         return self.generate_skill_md(full_name, metadata, readme_info, workflows, skill_name)
