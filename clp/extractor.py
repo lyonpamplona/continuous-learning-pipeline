@@ -18,23 +18,27 @@ class Extractor:
     def __init__(self, config=None):
         self.config = config or {}
         self.github_token = self.config.get("github_token", "")
-        self.headers = {}
+        self.headers = {
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        }
         if self.github_token:
             self.headers["Authorization"] = f"token {self.github_token}"
         self.timeout = self.config.get("extract_timeout", 15)
 
     def fetch_readme(self, full_name: str) -> str:
         """Buscar conteudo do README de um repositório."""
-        try:
-            url = f"https://api.github.com/repos/{full_name}/readme"
-            params = {"ref": "main"}
-            resp = requests.get(url, headers=self.headers, params=params, timeout=self.timeout)
-            if resp.status_code == 200:
-                data = resp.json()
-                return base64.b64decode(data.get("content", "")).decode("utf-8", errors="replace")
-            logger.warning(f"Erro buscando README de '{full_name}': status {resp.status_code}")
-        except Exception as e:
-            logger.error(f"Erro buscando README de '{full_name}': {e}")
+        for branch in ["main", "master"]:
+            try:
+                url = f"https://api.github.com/repos/{full_name}/readme"
+                params = {"ref": branch}
+                resp = requests.get(url, headers=self.headers, params=params, timeout=self.timeout)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return base64.b64decode(data.get("content", "")).decode("utf-8", errors="replace")
+                logger.warning(f"Erro buscando README de '{full_name}' (branch={branch}): status {resp.status_code}")
+            except Exception as e:
+                logger.error(f"Erro buscando README de '{full_name}' (branch={branch}): {e}")
         return ""
 
     def fetch_files(self, full_name: str, path: str = "") -> list:
@@ -47,6 +51,18 @@ class Extractor:
         except Exception as e:
             logger.error(f"Erro buscando arquivos de '{full_name}/{path}': {e}")
         return []
+
+    @staticmethod
+    def strip_html(text: str) -> str:
+        """Remove tags HTML e entitidades de um texto."""
+        # Remover tags HTML
+        clean = re.sub(r"<[^>]+>", "", text)
+        # Remover entitidades HTML comuns
+        clean = clean.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+        clean = clean.replace("&quot;", '"').replace("&#39;", "'").replace("&nbsp;", " ")
+        # Remover espacos extras
+        clean = re.sub(r"\s+", " ", clean).strip()
+        return clean
 
     def analyze_readme(self, readme: str) -> dict:
         """Analisa conteudo do README por informacoes de workflow."""
@@ -69,7 +85,8 @@ class Extractor:
                     break
                 continue
             purpose_lines.append(line)
-        info["purpose"] = " ".join(purpose_lines[:3])
+        raw_purpose = " ".join(purpose_lines[:3])
+        info["purpose"] = self.strip_html(raw_purpose)
 
         # Extrair secoes
         current_section = ""
@@ -147,9 +164,11 @@ class Extractor:
         if not skill_name:
             skill_name = metadata.get("name", repo_name.split("/")[-1]).lower().replace(" ", "-")
 
-        description = readme_info.get("purpose", "")[:60]
+        description = self.strip_html(readme_info.get("purpose", ""))[:60]
         if description and not description.endswith("."):
             description = description + "."
+        # Escapar aspas para YAML
+        description = description.replace('"', "'").replace("\\", "\\\\")
 
         # Build procedure from workflows
         procedure = ""
@@ -172,12 +191,25 @@ class Extractor:
             pitfalls.append("Repository may not be actively maintained")
         pitfalls.append("Always verify commands work in your environment")
 
+        # Sanitize trigger value for YAML safety
+        trigger_parts = []
+        name_val = metadata.get("name", "")
+        if name_val:
+            trigger_parts.append(name_val)
+        trigger_parts.append(repo_name)
+        purpose_val = readme_info.get("purpose", "")[:50]
+        if purpose_val:
+            trigger_parts.append(purpose_val)
+        trigger_value = ", ".join(trigger_parts)
+        # Escape special YAML characters in trigger
+        trigger_value = trigger_value.replace('"', "'").replace("\n", " ").replace("|", "").replace(":", " ")
+
         skill_content = f"""---
 name: {skill_name}
-trigger: {metadata.get('name', '')}, {repo_name}, {readme_info.get('purpose', '')[:50]}
+trigger: "{trigger_value}"
 description: "{description}"
 version: 1.0.0
-author: CLP Pipeline, extracted from {repo_name}
+author: "{repo_name}"
 license: MIT
 metadata:
   source:
