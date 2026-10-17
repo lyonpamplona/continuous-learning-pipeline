@@ -19,7 +19,7 @@ The Continuous Learning Pipeline (CLP) is an automated system that discovers, ex
 
 ```bash
 # Clone the repository
-git clone https://github.com/lyonchristopher/continuous-learning-pipeline.git
+git clone https://github.com/lyonpamplona/continuous-learning-pipeline.git
 cd continuous-learning-pipeline
 
 # Install dependencies
